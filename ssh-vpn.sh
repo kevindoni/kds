@@ -45,6 +45,43 @@ END
 wget -q -O /usr/local/bin/edu-proxy https://raw.githubusercontent.com/kevindoni/kds/main/proxy-templated.py
 chmod +x /usr/local/bin/edu-proxy
 
+#instalasi Websocket
+
+# Websocket OpenSSH
+#port 88 (OpenSSH) to 2082 (HTTP Websocket)
+cd
+wget -O /usr/local/bin/edu-proxy https://raw.githubusercontent.com/kevindoni/kds/main/websocket-python/baru/http.py && chmod +x /usr/local/bin/edu-proxy
+wget -O /etc/systemd/system/edu-proxy.service https://raw.githubusercontent.com/kevindoni/kds/main/websocket-python/baru/http.service && chmod +x /etc/systemd/system/edu-proxy.service
+systemctl daemon-reload.service
+systemctl enable edu-proxy.service
+systemctl restart edu-proxy.service
+clear
+
+# Dropbear WebSocket
+#port 69 ( Dropbear) to 8880 (HTTPS Websocket)
+cd
+wget -O /usr/local/bin/ws-dropbear https://raw.githubusercontent.com/kevindoni/kds/main/websocket-python/baru/https.py && chmod +x /usr/local/bin/ws-dropbear
+wget -O /etc/systemd/system/ws-dropbear.service https://raw.githubusercontent.com/kevindoni/kds/main/websocket-python/baru/https.service && chmod +x /etc/systemd/system/ws-dropbear.service
+#reboot service
+systemctl daemon-reload
+systemctl enable ws-dropbear.service
+systemctl start ws-dropbear.service
+systemctl restart ws-dropbear.service
+clear
+
+# OpenVPN WebSocket
+#port 1194 ( Dropbear) to 2086 (HTTP Websocket)
+wget -O /usr/local/bin/edu-proxyovpn https://raw.githubusercontent.com/kevindoni/kds/main/websocket-python/baru/ovpn.py && chmod +x /usr/local/bin/edu-proxyovpn
+wget -O /etc/systemd/system/edu-proxyovpn.service https://raw.githubusercontent.com/kevindoni/kds/main/websocket-python/baru/ovpn.service && chmod +x /etc/systemd/system/edu-proxyovpn.service
+
+#reboot service
+systemctl daemon-reload
+systemctl enable edu-proxyovpn.service
+systemctl start edu-proxyovpn.service
+systemctl restart edu-proxyovpn.service
+clear
+
+
 # Installing Service
 cat > /etc/systemd/system/edu-proxy.service << END
 [Unit]
@@ -164,6 +201,13 @@ apt -y install python
 # set time GMT +7
 ln -fs /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
 
+# install
+apt-get --reinstall --fix-missing install -y bzip2 gzip coreutils wget screen rsyslog iftop htop net-tools zip unzip wget net-tools curl nano sed screen gnupg gnupg1 bc apt-transport-https build-essential dirmngr libxml-parser-perl neofetch git lsof
+echo "clear" >> .profile
+echo "neofetch" >> .profile
+echo "echo by HideSSH.com" >> .profile
+echo "echo Ketik menu" >> .profile
+
 # set locale
 sed -i 's/AcceptEnv/#AcceptEnv/g' /etc/ssh/sshd_config
 
@@ -262,6 +306,10 @@ connect = 127.0.0.1:1194
 accept = 441
 connect = 127.0.0.1:770
 
+[slws]
+accept = 8443
+connect = 127.0.0.1:443
+
 END
 
 # make a certificate
@@ -273,6 +321,15 @@ cat key.pem cert.pem >> /etc/stunnel/stunnel.pem
 # konfigurasi stunnel
 sed -i 's/ENABLED=0/ENABLED=1/g' /etc/default/stunnel4
 /etc/init.d/stunnel4 restart
+
+cd
+#install sslh
+apt-get install sslh -y
+
+#konfigurasi
+#port 333 to 44 and 777
+wget -O /etc/default/sslh "https://raw.githubusercontent.com/4hidessh/baru/main/SSLH/sslh.conf"
+service sslh restart
 
 #install badvpncdn
 wget https://github.com/ambrop72/badvpn/archive/master.zip
@@ -379,6 +436,7 @@ wget -O /usr/bin/user-limit https://raw.githubusercontent.com/kevindoni/kds/main
 wget -O cfd "https://raw.githubusercontent.com/kevindoni/kds/main/cfd.sh"
 wget -O cff "https://raw.githubusercontent.com/kevindoni/kds/main/cff.sh"
 wget -O cfh "https://raw.githubusercontent.com/kevindoni/kds/main/cfh.sh"
+wget -O autoreboot "https://raw.githubusercontent.com/kevindoni/kds/main/allservice.sh"
 wget -O upgrade-mn "https://raw.githubusercontent.com/kevindoni/kds/main/up-menu.sh"
 chmod +x add-host
 chmod +x menu
@@ -415,7 +473,12 @@ chmod +x cff
 chmod +x cfh
 chmod +x autoreboot
 chmod +x upgrade-mn
+#cronjob
+echo "0 23 * * * root clear-log && autoreboot" >> /etc/crontab
+echo "0 11 * * * root clear-log && autoreboot" >> /etc/crontab
 echo "0 5 * * * root clear-log && reboot" >> /etc/crontab
+echo "0 17 * * * root clear-log && reboot" >> /etc/crontab
+echo "50 * * * * root userdelexpired" >> /etc/crontab
 # remove unnecessary files
 cd
 apt autoclean -y
@@ -459,6 +522,18 @@ apt-get install net-tools -y
 apt-get install tcpdump -y
 apt-get install dsniff -y
 apt install grepcidr -y
+
+#install golang
+apt-get install golang -y
+
+#download scource slowdns
+wget https://github.com/Mygod/dnstt/archive/refs/heads/plugin.zip
+unzip plugin.zip
+cd 
+
+cd dnstt/dnstt-server
+go build
+./dnstt-server -gen-key -privkey-file server.key -pubkey-file server.pub
 
 # finihsing
 clear
